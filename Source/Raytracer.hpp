@@ -23,6 +23,9 @@ public:
 	void Resize(uint32 width, uint32 height);
 
 private:
+	void CreatePipelines();
+	void DestroyPipelines();
+
 	void CreateScreenTextures(uint32 width, uint32 height);
 	void DestroyScreenTextures();
 

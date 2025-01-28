@@ -9,23 +9,14 @@ Raytracer::Raytracer(const Platform::Window* window)
 {
 	CreateScreenTextures(window->DrawWidth, window->DrawHeight);
 
-	DrawText::Get().Init(&Device);
+	CreatePipelines();
 
-	Shader traceShader = Device.CreateShader(
-	{
-		.Stage = ShaderStage::Compute,
-		.FilePath = "Shaders/Trace.hlsl"_view,
-	});
-	TracePipeline = Device.CreatePipeline("Trace Pipeline"_view,
-	{
-		.Stage = traceShader,
-	});
-	Device.DestroyShader(&traceShader);
+	DrawText::Get().Init(&Device);
 }
 
 Raytracer::~Raytracer()
 {
-	Device.DestroyPipeline(&TracePipeline);
+	DestroyPipelines();
 
 	DrawText::Get().Shutdown();
 
@@ -40,6 +31,13 @@ void Raytracer::Update()
 	char gpuTimeText[20] = {};
 	Platform::StringPrint("GPU: %.2f mspf", gpuTimeText, sizeof(gpuTimeText), AverageGpuTime * 1000.0);
 	DrawText::Get().Draw(StringView { gpuTimeText, Platform::StringLength(gpuTimeText) }, { 0.0f, 0.0f }, Float3 { 1.0f, 1.0f, 1.0f }, 32.0f);
+
+	if (IsKeyPressedOnce(Key::R))
+	{
+		Device.WaitForIdle();
+		DestroyPipelines();
+		CreatePipelines();
+	}
 
 	Graphics.Begin();
 
@@ -115,6 +113,25 @@ void Raytracer::Resize(uint32 width, uint32 height)
 	CreateScreenTextures(width, height);
 
 	Device.WaitForIdle();
+}
+
+void Raytracer::CreatePipelines()
+{
+	Shader traceShader = Device.CreateShader(
+	{
+		.Stage = ShaderStage::Compute,
+		.FilePath = "Shaders/Trace.hlsl"_view,
+	});
+	TracePipeline = Device.CreatePipeline("Trace Pipeline"_view,
+	{
+		.Stage = traceShader,
+	});
+	Device.DestroyShader(&traceShader);
+}
+
+void Raytracer::DestroyPipelines()
+{
+	Device.DestroyPipeline(&TracePipeline);
 }
 
 void Raytracer::CreateScreenTextures(uint32 width, uint32 height)
