@@ -11,7 +11,7 @@ static void ResizeHandler(Platform::Window*)
 
 void Start()
 {
-	Platform::Window* window = Platform::MakeWindow("Eos", 1920, 1080);
+	Platform::Window* window = Platform::MakeWindow("Eos", 1280, 720);
 
 	Platform::ShowWindow(window);
 	Platform::InstallResizeHandler(ResizeHandler);
