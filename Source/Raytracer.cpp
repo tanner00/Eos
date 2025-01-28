@@ -1,5 +1,4 @@
 #include "Raytracer.hpp"
-
 #include "DrawText.hpp"
 
 Raytracer::Raytracer(const Platform::Window* window)

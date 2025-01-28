@@ -1,9 +1,9 @@
 #pragma once
 
+#include "RHI/GpuDevice.hpp"
+
 #include "Luft/Base.hpp"
 #include "Luft/NoCopy.hpp"
-
-#include "RHI/GpuDevice.hpp"
 
 struct RootConstants
 {
