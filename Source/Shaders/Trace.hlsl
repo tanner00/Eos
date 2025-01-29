@@ -67,7 +67,8 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float sphereRadius = 0.5f;
 
 	const float t = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius);
-	const float3 outputColor = (t >= 0.0f) ? float3(1.0f, 0.0f, 0.0f) : backgroundColor;
+	const float3 normal = ((RootConstants.Position + rayDirection * t) - sphereCenter) / sphereRadius;
+	const float3 outputColor = (t >= 0.0f) ? (normal * 0.5f + 0.5f) : backgroundColor;
 
 	outputTexture[uint2(x, y)] = outputColor;
 }
