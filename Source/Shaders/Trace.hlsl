@@ -1,11 +1,14 @@
 struct RootConstants
 {
 	uint OutputTextureIndex;
+
+	float FieldOfViewYRadians;
+	float FocalLength;
+
+	matrix Orientation;
+	float3 Position;
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
-
-static const float viewportHeight = 2.0f;
-static const float focalLength = 1.0f;
 
 bool RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
 {
@@ -31,29 +34,34 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 
 	const float aspectRatio = (float)outputTextureWidth / outputTextureHeight;
 
+	const float viewportHeight = 2.0f * tan(RootConstants.FieldOfViewYRadians / 2.0f) * RootConstants.FocalLength;
 	const float viewportWidth = viewportHeight * aspectRatio;
 
-	const float3 viewportU = float3(viewportWidth, 0.0f, 0.0f);
-	const float3 viewportV = float3(0.0f, -viewportHeight, 0.0f);
+	const matrix view = transpose(RootConstants.Orientation);
+	const float3 cameraX = view._m00_m01_m02;
+	const float3 cameraY = view._m10_m11_m12;
+	const float3 cameraZ = view._m20_m21_m22;
 
-	const float3 pixelDeltaU = viewportU / outputTextureWidth;
-	const float3 pixelDeltaV = viewportV / outputTextureHeight;
-	const float3 pixelCenter = 0.5f * (pixelDeltaU + pixelDeltaV);
+	const float3 viewportX = viewportWidth * cameraX;
+	const float3 viewportY = viewportHeight * -cameraY;
 
-	const float3 cameraCenter = 0.0f;
-	const float3 viewportTopLeft = cameraCenter - float3(0.0f, 0.0f, focalLength) - (viewportU / 2.0f) - (viewportV / 2.0f);
-	const float3 viewportPixel = viewportTopLeft + pixelCenter + (pixelDeltaU * x + pixelDeltaV * y);
+	const float3 viewportDeltaX = viewportX / outputTextureWidth;
+	const float3 viewportDeltaY = viewportY / outputTextureHeight;
+	const float3 pixelCenter = 0.5f * (viewportDeltaX + viewportDeltaY);
 
-	const float3 rayOffset = viewportPixel - cameraCenter;
+	const float3 viewportTopLeft = RootConstants.Position - (RootConstants.FocalLength * cameraZ) - (viewportX / 2.0f) - (viewportY / 2.0f);
+	const float3 viewportPixel = viewportTopLeft + pixelCenter + (viewportDeltaX * x + viewportDeltaY * y);
+
+	const float3 rayOffset = viewportPixel - RootConstants.Position;
 	const float3 rayDirection = normalize(rayOffset);
 
 	const float alpha = 0.5f * (rayDirection.y + 1.0f);
-	const float3 backgroundColor = float3(1.0f, 1.0f, 1.0f) * (1.0f - alpha) + float3(0.5f, 0.7f, 1.0f) * alpha;
+	const float3 backgroundColor = lerp(float3(1.0f, 1.0f, 1.0f), float3(0.5f, 0.7f, 1.0f), alpha);
 
 	const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
 	const float sphereRadius = 0.5f;
 
-	const float3 outputColor = RaySphere(cameraCenter, rayDirection, sphereCenter, sphereRadius) ? float3(1.0f, 0.0f, 0.0f) : backgroundColor;
+	const float3 outputColor = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius) ? float3(1.0f, 0.0f, 0.0f) : backgroundColor;
 
 	outputTexture[uint2(x, y)] = outputColor;
 }

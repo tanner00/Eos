@@ -1,4 +1,5 @@
 #include "Raytracer.hpp"
+#include "CameraController.hpp"
 #include "DrawText.hpp"
 
 Raytracer::Raytracer(const Platform::Window* window)
@@ -22,7 +23,7 @@ Raytracer::~Raytracer()
 	DestroyScreenTextures();
 }
 
-void Raytracer::Update()
+void Raytracer::Update(const CameraController& cameraController)
 {
 	const double gpuTime = Graphics.GetMostRecentGpuTime();
 	AverageGpuTime = AverageGpuTime * 0.95 + gpuTime * 0.05;
@@ -41,16 +42,20 @@ void Raytracer::Update()
 	Graphics.Begin();
 
 	const Texture& frameTexture = SwapChainTextures[Device.GetFrameIndex()];
-	Graphics.SetRenderTarget(frameTexture);
-
-	Graphics.SetViewport(frameTexture.GetWidth(), frameTexture.GetHeight());
 
 	Graphics.SetPipeline(&TracePipeline);
+
+	const Vector position = cameraController.GetPosition();
 	const RootConstants rootConstants =
 	{
 		.OutputTextureIndex = Device.Get(OutputTexture),
+		.FieldOfViewYRadians = cameraController.GetFieldOfViewYRadians(),
+		.FocalLength = cameraController.GetFocalLength(),
+		.Orientation = cameraController.GetOrientation(),
+		.Position = Float3 { position.X, position.Y, position.Z },
 	};
 	Graphics.SetRootConstants(&rootConstants);
+
 	Graphics.Dispatch(frameTexture.GetWidth(), frameTexture.GetHeight(), 1);
 
 	Graphics.TextureBarrier
@@ -84,6 +89,9 @@ void Raytracer::Update()
 		{ BarrierLayout::GraphicsQueueCopyDestination, BarrierLayout::RenderTarget },
 		frameTexture
 	);
+
+	Graphics.SetRenderTarget(frameTexture);
+	Graphics.SetViewport(frameTexture.GetWidth(), frameTexture.GetHeight());
 
 	DrawText::Get().Submit(&Graphics, frameTexture.GetWidth(), frameTexture.GetHeight());
 

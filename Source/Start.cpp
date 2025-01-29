@@ -1,3 +1,4 @@
+#include "CameraController.hpp"
 #include "Raytracer.hpp"
 
 #include "Luft/Platform.hpp"
@@ -18,11 +19,30 @@ void Start()
 
 	Raytracer raytracer(window);
 
+	static constexpr float fieldOfYRadians = Pi / 2.0f;
+	static constexpr float focalLength = 1.0f;
+	CameraController cameraController(fieldOfYRadians, focalLength);
+
+	double timeLast = 0.0;
+
 	while (!Platform::IsQuitRequested())
 	{
 		Platform::ProcessEvents();
 
-		if (IsKeyPressedOnce(Key::Escape))
+		const bool setCaptured = IsMouseButtonPressedOnce(MouseButton::Left);
+		const bool setDefault = (IsKeyPressedOnce(Key::Escape) && Platform::GetInputMode() == InputMode::Captured) ||
+								!Platform::IsWindowFocused(window);
+		const bool quit = IsKeyPressedOnce(Key::Escape) && Platform::GetInputMode() == InputMode::Default;
+
+		if (setCaptured)
+		{
+			Platform::SetInputMode(window, InputMode::Captured);
+		}
+		else if (setDefault)
+		{
+			Platform::SetInputMode(window, InputMode::Default);
+		}
+		else if (quit)
 		{
 			break;
 		}
@@ -38,7 +58,12 @@ void Start()
 			NeedsResize = false;
 		}
 
-		raytracer.Update();
+		const double timeNow = Platform::GetTime();
+		const double timeDelta = timeNow - timeLast;
+		timeLast = timeNow;
+
+		cameraController.Update(static_cast<float>(timeDelta));
+		raytracer.Update(cameraController);
 	}
 
 	Platform::DestroyWindow(window);

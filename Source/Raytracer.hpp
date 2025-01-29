@@ -3,13 +3,24 @@
 #include "RHI/GpuDevice.hpp"
 
 #include "Luft/Base.hpp"
+#include "Luft/Math.hpp"
 #include "Luft/NoCopy.hpp"
+
+class CameraController;
 
 struct RootConstants
 {
 	uint32 OutputTextureIndex;
 
-	PAD(252);
+	float FieldOfViewYRadians;
+	float FocalLength;
+
+	PAD(4);
+
+	Matrix Orientation;
+	Float3 Position;
+
+	PAD(164);
 };
 
 class Raytracer : public NoCopy
@@ -18,7 +29,7 @@ public:
 	explicit Raytracer(const Platform::Window* window);
 	~Raytracer();
 
-	void Update();
+	void Update(const CameraController& cameraController);
 
 	void Resize(uint32 width, uint32 height);
 
