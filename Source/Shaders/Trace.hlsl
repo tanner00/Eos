@@ -1,3 +1,5 @@
+static float Infinity = 1.#INF;
+
 struct RootConstants
 {
 	uint OutputTextureIndex;
@@ -22,7 +24,7 @@ bool IsValidHit(Hit hit)
 	return hit.Time >= 0.0f;
 }
 
-Hit RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
+Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMaxT, float3 sphereCenter, float sphereRadius)
 {
 	const float3 offset = sphereCenter - rayOrigin;
 	const float a = dot(rayDirection, rayDirection);
@@ -34,7 +36,12 @@ Hit RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float 
 	if (discriminant >= 0.0f)
 	{
 		const float firstHit = (-b - sqrt(discriminant)) / (2.0f * a);
-		time = firstHit;
+		const bool firstHitValid = firstHit >= rayMinT && firstHit <= rayMaxT;
+
+		const float secondHit = (-b + sqrt(discriminant)) / (2.0f * a);
+		const bool secondHitValid = secondHit >= rayMinT && secondHit <= rayMaxT;
+
+		time = firstHitValid ? firstHit : (secondHitValid ? secondHit : time);
 	}
 
 	Hit hit;
@@ -85,7 +92,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
 	const float sphereRadius = 0.5f;
 
-	const Hit hit = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius);
+	const Hit hit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphereCenter, sphereRadius);
 	const float3 outputColor = IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : backgroundColor;
 
 	outputTexture[uint2(x, y)] = outputColor;
