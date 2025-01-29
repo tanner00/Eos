@@ -1,4 +1,4 @@
-static float Infinity = 1.#INF;
+static const float Infinity = 1.#INF;
 
 struct RootConstants
 {
