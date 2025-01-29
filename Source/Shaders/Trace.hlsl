@@ -10,14 +10,19 @@ struct RootConstants
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
-bool RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
+float RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
 {
 	const float3 offset = sphereCenter - rayOrigin;
 	const float a = dot(rayDirection, rayDirection);
 	const float b = -2.0f * dot(rayDirection, offset);
 	const float c = dot(offset, offset) - sphereRadius * sphereRadius;
 	const float discriminant = b * b - 4.0f * a * c;
-	return discriminant >= 0.0f;
+
+	if (discriminant < 0.0f)
+	{
+		return -1.0f;
+	}
+	return (-b - sqrt(discriminant)) / (2.0f * a);
 }
 
 [numthreads(1, 1, 1)]
@@ -61,7 +66,8 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
 	const float sphereRadius = 0.5f;
 
-	const float3 outputColor = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius) ? float3(1.0f, 0.0f, 0.0f) : backgroundColor;
+	const float t = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius);
+	const float3 outputColor = (t >= 0.0f) ? float3(1.0f, 0.0f, 0.0f) : backgroundColor;
 
 	outputTexture[uint2(x, y)] = outputColor;
 }
