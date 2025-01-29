@@ -17,6 +17,7 @@ struct Hit
 	float Time;
 	float3 Point;
 	float3 Normal;
+	bool FrontFace;
 };
 
 bool IsValidHit(Hit hit)
@@ -44,10 +45,15 @@ Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMax
 		time = firstHitValid ? firstHit : (secondHitValid ? secondHit : time);
 	}
 
+	const float3 hitPoint = (rayOrigin + rayDirection * time) - sphereCenter;
+	const float3 outwardNormal = hitPoint / sphereRadius;
+	const bool frontFace = dot(rayDirection, outwardNormal) <= 0.0f;
+
 	Hit hit;
 	hit.Time = time;
-	hit.Point = (rayOrigin + rayDirection * time) - sphereCenter;
-	hit.Normal = hit.Point / sphereRadius;
+	hit.Point = hitPoint;
+	hit.Normal = frontFace ? outwardNormal : -outwardNormal;
+	hit.FrontFace = frontFace;
 	return hit;
 }
 
