@@ -10,7 +10,19 @@ struct RootConstants
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
-float RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
+struct Hit
+{
+	float Time;
+	float3 Point;
+	float3 Normal;
+};
+
+bool IsValidHit(Hit hit)
+{
+	return hit.Time >= 0.0f;
+}
+
+Hit RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, float sphereRadius)
 {
 	const float3 offset = sphereCenter - rayOrigin;
 	const float a = dot(rayDirection, rayDirection);
@@ -18,11 +30,18 @@ float RaySphere(float3 rayOrigin, float3 rayDirection, float3 sphereCenter, floa
 	const float c = dot(offset, offset) - sphereRadius * sphereRadius;
 	const float discriminant = b * b - 4.0f * a * c;
 
-	if (discriminant < 0.0f)
+	float time = -1.0f;
+	if (discriminant >= 0.0f)
 	{
-		return -1.0f;
+		const float firstHit = (-b - sqrt(discriminant)) / (2.0f * a);
+		time = firstHit;
 	}
-	return (-b - sqrt(discriminant)) / (2.0f * a);
+
+	Hit hit;
+	hit.Time = time;
+	hit.Point = (rayOrigin + rayDirection * time) - sphereCenter;
+	hit.Normal = hit.Point / sphereRadius;
+	return hit;
 }
 
 [numthreads(1, 1, 1)]
@@ -66,9 +85,8 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
 	const float sphereRadius = 0.5f;
 
-	const float t = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius);
-	const float3 normal = ((RootConstants.Position + rayDirection * t) - sphereCenter) / sphereRadius;
-	const float3 outputColor = (t >= 0.0f) ? (normal * 0.5f + 0.5f) : backgroundColor;
+	const Hit hit = RaySphere(RootConstants.Position, rayDirection, sphereCenter, sphereRadius);
+	const float3 outputColor = IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : backgroundColor;
 
 	outputTexture[uint2(x, y)] = outputColor;
 }
