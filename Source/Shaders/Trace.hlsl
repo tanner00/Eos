@@ -16,6 +16,20 @@ struct RootConstants
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
+struct Sphere
+{
+	float3 Position;
+	float Radius;
+};
+
+static const uint SpheresCount = 3;
+static const Sphere Spheres[SpheresCount] =
+{
+	{ float3(0.0f, 0.0f, -2.0f), 0.5f },
+	{ float3(0.0f, 0.0f, -1.0f), 0.5f },
+	{ float3(0.0f, -50.5f, -1.0f), 50.0f },
+};
+
 struct Hit
 {
 	float Time;
@@ -106,10 +120,19 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 		const float3 rayOffset = viewportPixel - RootConstants.Position;
 		const float3 rayDirection = normalize(rayOffset);
 
-		const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
-		const float sphereRadius = 0.5f;
+		Hit hit = (Hit)0;
+		hit.Time = -1.0f;
+		for (uint j = 0; j < SpheresCount; ++j)
+		{
+			const Sphere sphere = Spheres[j];
 
-		const Hit hit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphereCenter, sphereRadius);
+			const Hit potentialHit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphere.Position, sphere.Radius);
+			const bool closer = potentialHit.Time < hit.Time;
+			if (IsValidHit(potentialHit) && (closer || !IsValidHit(hit)))
+			{
+				hit = potentialHit;
+			}
+		}
 
 		samples += IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : BackgroundColor;
 	}
