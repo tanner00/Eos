@@ -1,4 +1,8 @@
-static const float Infinity = 1.#INF;
+#include "Common.hlsli"
+
+static const uint SamplesPerPixel = 8;
+
+static const float3 BackgroundColor = float3(0.4f, 0.6f, 0.9f);
 
 struct RootConstants
 {
@@ -69,6 +73,11 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	uint outputTextureHeight;
 	outputTexture.GetDimensions(outputTextureWidth, outputTextureHeight);
 
+	const uint dispatchThreadIndex = y * outputTextureWidth + x;
+
+	uint rngState = dispatchThreadIndex;
+	PcgRandom(rngState);
+
 	const float aspectRatio = (float)outputTextureWidth / outputTextureHeight;
 
 	const float viewportHeight = 2.0f * tan(RootConstants.FieldOfViewYRadians / 2.0f) * RootConstants.FocalLength;
@@ -87,19 +96,24 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float3 pixelCenter = 0.5f * (viewportDeltaX + viewportDeltaY);
 
 	const float3 viewportTopLeft = RootConstants.Position - (RootConstants.FocalLength * cameraZ) - (viewportX / 2.0f) - (viewportY / 2.0f);
-	const float3 viewportPixel = viewportTopLeft + pixelCenter + (viewportDeltaX * x + viewportDeltaY * y);
 
-	const float3 rayOffset = viewportPixel - RootConstants.Position;
-	const float3 rayDirection = normalize(rayOffset);
+	float3 samples = 0.0f;
+	for (uint i = 0; i < SamplesPerPixel; ++i)
+	{
+		const float2 sampleOffset = float2(Random01(rngState) - 0.5f, Random01(rngState) - 0.5f);
+		const float3 viewportPixel = viewportTopLeft + pixelCenter + (viewportDeltaX * (x + sampleOffset.x) + viewportDeltaY * (y + sampleOffset.y));
 
-	const float alpha = 0.5f * (rayDirection.y + 1.0f);
-	const float3 backgroundColor = lerp(float3(1.0f, 1.0f, 1.0f), float3(0.5f, 0.7f, 1.0f), alpha);
+		const float3 rayOffset = viewportPixel - RootConstants.Position;
+		const float3 rayDirection = normalize(rayOffset);
 
-	const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
-	const float sphereRadius = 0.5f;
+		const float3 sphereCenter = float3(0.0f, 0.0f, -1.0f);
+		const float sphereRadius = 0.5f;
 
-	const Hit hit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphereCenter, sphereRadius);
-	const float3 outputColor = IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : backgroundColor;
+		const Hit hit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphereCenter, sphereRadius);
 
+		samples += IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : BackgroundColor;
+	}
+
+	const float3 outputColor = samples / SamplesPerPixel;
 	outputTexture[uint2(x, y)] = outputColor;
 }
