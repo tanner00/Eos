@@ -1,6 +1,7 @@
 #include "Common.hlsli"
 
 static const uint SamplesPerPixel = 8;
+static const uint MaxDepth = 10;
 
 static const float3 BackgroundColor = float3(0.4f, 0.6f, 0.9f);
 
@@ -117,24 +118,43 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 		const float2 sampleOffset = float2(Random01(rngState) - 0.5f, Random01(rngState) - 0.5f);
 		const float3 viewportPixel = viewportTopLeft + pixelCenter + (viewportDeltaX * (x + sampleOffset.x) + viewportDeltaY * (y + sampleOffset.y));
 
-		const float3 rayOffset = viewportPixel - RootConstants.Position;
-		const float3 rayDirection = normalize(rayOffset);
+		float3 rayOrigin = RootConstants.Position;
+		float3 rayDirection = normalize(viewportPixel - RootConstants.Position);
+		uint depth = 0;
 
-		Hit hit = (Hit)0;
-		hit.Time = -1.0f;
-		for (uint j = 0; j < SpheresCount; ++j)
+		float3 color = BackgroundColor;
+		while (depth != MaxDepth)
 		{
-			const Sphere sphere = Spheres[j];
-
-			const Hit potentialHit = RaySphere(RootConstants.Position, rayDirection, 0.0f, Infinity, sphere.Position, sphere.Radius);
-			const bool closer = potentialHit.Time < hit.Time;
-			if (IsValidHit(potentialHit) && (closer || !IsValidHit(hit)))
+			Hit hit = (Hit)0;
+			hit.Time = -1.0f;
+			for (uint j = 0; j < SpheresCount; ++j)
 			{
-				hit = potentialHit;
+				const Sphere sphere = Spheres[j];
+
+				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0f, Infinity, sphere.Position, sphere.Radius);
+				const bool closer = potentialHit.Time < hit.Time;
+				if (IsValidHit(potentialHit) && (closer || !IsValidHit(hit)))
+				{
+					hit = potentialHit;
+				}
+			}
+
+			if (IsValidHit(hit))
+			{
+				const float3 material = color * 0.5f;
+				color = material;
+
+				rayDirection = hit.Normal;
+				rayOrigin = hit.Point;
+
+				++depth;
+			}
+			else
+			{
+				break;
 			}
 		}
-
-		samples += IsValidHit(hit) ? (hit.Normal * 0.5f + 0.5f) : BackgroundColor;
+		samples += color;
 	}
 
 	const float3 outputColor = samples / SamplesPerPixel;
