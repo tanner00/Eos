@@ -1,5 +1,15 @@
 ﻿static const float Infinity = 1.#INF;
 
+float3 LinearToSrgb(float3 x)
+{
+	return select(x < 0.0031308f, x * 12.92f, (pow(x, 1.0f / 2.4f) * 1.055f) - 0.055f);
+}
+
+float3 SrgbToLinear(float3 x)
+{
+	return select(x < 0.04045f, x / 12.92f, pow((x + 0.055f) / 1.055f, 2.4f));
+}
+
 uint PcgRandom(inout uint rngState)
 {
 	const uint state = rngState;

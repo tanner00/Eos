@@ -157,6 +157,6 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 		samples += color;
 	}
 
-	const float3 outputColor = samples / SamplesPerPixel;
+	const float3 outputColor = LinearToSrgb(samples / SamplesPerPixel);
 	outputTexture[uint2(x, y)] = outputColor;
 }
