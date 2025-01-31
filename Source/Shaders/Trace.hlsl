@@ -45,10 +45,10 @@ bool IsValidHit(Hit hit)
 
 Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMaxT, float3 sphereCenter, float sphereRadius)
 {
-	const float3 offset = sphereCenter - rayOrigin;
+	const float3 rayToSphereOffset = sphereCenter - rayOrigin;
 	const float a = dot(rayDirection, rayDirection);
-	const float b = -2.0f * dot(rayDirection, offset);
-	const float c = dot(offset, offset) - sphereRadius * sphereRadius;
+	const float b = -2.0f * dot(rayDirection, rayToSphereOffset);
+	const float c = dot(rayToSphereOffset, rayToSphereOffset) - sphereRadius * sphereRadius;
 	const float discriminant = b * b - 4.0f * a * c;
 
 	float time = -1.0f;
@@ -63,8 +63,8 @@ Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMax
 		time = firstHitValid ? firstHit : (secondHitValid ? secondHit : time);
 	}
 
-	const float3 hitPoint = (rayOrigin + rayDirection * time) - sphereCenter;
-	const float3 outwardNormal = hitPoint / sphereRadius;
+	const float3 hitPoint = rayOrigin + rayDirection * time;
+	const float3 outwardNormal = (hitPoint - sphereCenter) / sphereRadius;
 	const bool frontFace = dot(rayDirection, outwardNormal) <= 0.0f;
 
 	Hit hit;
