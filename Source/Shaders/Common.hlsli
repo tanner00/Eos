@@ -18,3 +18,24 @@ float Random(inout uint rngState, float min, float max)
 {
 	return lerp(min, max, Random01(rngState));
 }
+
+float3 RandomUnitVector(inout uint rngState)
+{
+	float3 x;
+	while (true)
+	{
+		x = float3(Random(rngState, -1.0f, 1.0f), Random(rngState, -1.0f, 1.0f), Random(rngState, -1.0f, 1.0f));
+		const float lengthSquared = dot(x, x);
+		if (1e-20 <= lengthSquared && lengthSquared <= 1.0f)
+		{
+			break;
+		}
+	}
+	return normalize(x);
+}
+
+float3 RandomHemisphere(inout uint rngState, float3 normal)
+{
+	const float3 x = RandomUnitVector(rngState);
+	return dot(x, normal) > 0.0f ? x : -x;
+}

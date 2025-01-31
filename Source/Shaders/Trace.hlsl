@@ -144,7 +144,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 				const float3 material = color * 0.5f;
 				color = material;
 
-				rayDirection = hit.Normal;
+				rayDirection = RandomHemisphere(rngState, hit.Normal);
 				rayOrigin = hit.Point;
 
 				++depth;
