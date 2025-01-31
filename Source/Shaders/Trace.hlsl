@@ -131,7 +131,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 			{
 				const Sphere sphere = Spheres[j];
 
-				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0f, Infinity, sphere.Position, sphere.Radius);
+				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0001f, Infinity, sphere.Position, sphere.Radius);
 				const bool closer = potentialHit.Time < hit.Time;
 				if (IsValidHit(potentialHit) && (closer || !IsValidHit(hit)))
 				{
