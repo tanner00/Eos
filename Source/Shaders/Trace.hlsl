@@ -23,12 +23,13 @@ struct Sphere
 	float Radius;
 };
 
-static const uint SpheresCount = 3;
+static const uint SpheresCount = 4;
 static const Sphere Spheres[SpheresCount] =
 {
-	{ float3(0.0f, 0.0f, -2.0f), 0.5f },
-	{ float3(0.0f, 0.0f, -1.0f), 0.5f },
-	{ float3(0.0f, -50.5f, -1.0f), 50.0f },
+	{ float3(0.0f, -100.5f, -1.0f), 100.0f },
+	{ float3(0.0f, 0.0f, -1.2f), 0.5f },
+	{ float3(-1.0f, 0.0f, -1.0f), 0.5f },
+	{ float3(1.0f, 0.0f, -1.0f), 0.5f },
 };
 
 struct Hit
