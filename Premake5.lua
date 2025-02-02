@@ -25,7 +25,7 @@ project "Eos"
 
 	files {
 		"Source/**.cpp", "Source/**.hpp",
-		"Source/**.hlsl",
+		"Source/**.hlsl", "Source/**.hlsli",
 	}
 
 	filter {}
