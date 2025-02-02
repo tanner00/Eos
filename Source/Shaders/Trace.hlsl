@@ -45,12 +45,12 @@ bool IsValidHit(Hit hit)
 	return hit.Time >= 0.0f;
 }
 
-Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMaxT, float3 sphereCenter, float sphereRadius)
+Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMaxT, Sphere sphere)
 {
-	const float3 rayToSphereOffset = sphereCenter - rayOrigin;
+	const float3 rayToSphereOffset = sphere.Position - rayOrigin;
 	const float a = dot(rayDirection, rayDirection);
 	const float b = -2.0f * dot(rayDirection, rayToSphereOffset);
-	const float c = dot(rayToSphereOffset, rayToSphereOffset) - sphereRadius * sphereRadius;
+	const float c = dot(rayToSphereOffset, rayToSphereOffset) - sphere.Radius * sphere.Radius;
 	const float discriminant = b * b - 4.0f * a * c;
 
 	float time = -1.0f;
@@ -66,7 +66,7 @@ Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMax
 	}
 
 	const float3 hitPoint = rayOrigin + rayDirection * time;
-	const float3 outwardNormal = (hitPoint - sphereCenter) / sphereRadius;
+	const float3 outwardNormal = (hitPoint - sphere.Position) / sphere.Radius;
 	const bool frontFace = dot(rayDirection, outwardNormal) <= 0.0f;
 
 	Hit hit;
@@ -132,7 +132,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 			{
 				const Sphere sphere = Spheres[j];
 
-				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0001f, Infinity, sphere.Position, sphere.Radius);
+				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0001f, Infinity, sphere);
 				const bool closer = potentialHit.Time < hit.Time;
 				if (IsValidHit(potentialHit) && (closer || !IsValidHit(hit)))
 				{
