@@ -20,6 +20,7 @@ ConstantBuffer<RootConstants> RootConstants : register(b0);
 enum class MaterialType
 {
 	Lambertian,
+	Metallic,
 };
 
 struct Material
@@ -40,8 +41,8 @@ static const Sphere Spheres[SpheresCount] =
 {
 	{ float3(0.0f, -100.5f, -1.0f), 100.0f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.0f) },
 	{ float3(0.0f, 0.0f, -1.2f), 0.5f, MaterialType::Lambertian, float3(0.1f, 0.2f, 0.5f) },
-	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.8f) },
-	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Lambertian, float3(0.8f, 0.6f, 0.2f) },
+	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.8f, 0.8f) },
+	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.6f, 0.2f) },
 };
 
 struct Hit
@@ -103,6 +104,12 @@ void Scatter(inout uint rngState, inout float3 rayDirection, inout float3 attenu
 		{
 			rayDirection = hit.Normal;
 		}
+		break;
+	}
+	case MaterialType::Metallic:
+	{
+		attenuation *= hit.Material.Albedo;
+		rayDirection = reflect(rayDirection, hit.Normal);
 		break;
 	}
 	}
