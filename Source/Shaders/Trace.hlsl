@@ -17,19 +17,31 @@ struct RootConstants
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
+enum class MaterialType
+{
+	Lambertian,
+};
+
+struct Material
+{
+	MaterialType Type;
+	float3 Albedo;
+};
+
 struct Sphere
 {
 	float3 Position;
 	float Radius;
+	Material Material;
 };
 
 static const uint SpheresCount = 4;
 static const Sphere Spheres[SpheresCount] =
 {
-	{ float3(0.0f, -100.5f, -1.0f), 100.0f },
-	{ float3(0.0f, 0.0f, -1.2f), 0.5f },
-	{ float3(-1.0f, 0.0f, -1.0f), 0.5f },
-	{ float3(1.0f, 0.0f, -1.0f), 0.5f },
+	{ float3(0.0f, -100.5f, -1.0f), 100.0f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.0f) },
+	{ float3(0.0f, 0.0f, -1.2f), 0.5f, MaterialType::Lambertian, float3(0.1f, 0.2f, 0.5f) },
+	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.8f) },
+	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Lambertian, float3(0.8f, 0.6f, 0.2f) },
 };
 
 struct Hit
@@ -38,6 +50,7 @@ struct Hit
 	float3 Point;
 	float3 Normal;
 	bool FrontFace;
+	Material Material;
 };
 
 bool IsValidHit(Hit hit)
@@ -74,7 +87,21 @@ Hit RaySphere(float3 rayOrigin, float3 rayDirection, float rayMinT, float rayMax
 	hit.Point = hitPoint;
 	hit.Normal = frontFace ? outwardNormal : -outwardNormal;
 	hit.FrontFace = frontFace;
+	hit.Material = sphere.Material;
 	return hit;
+}
+
+void Scatter(inout uint rngState, inout float3 rayDirection, inout float3 attenuation, Hit hit)
+{
+	switch (hit.Material.Type)
+	{
+	case MaterialType::Lambertian:
+	{
+		attenuation *= hit.Material.Albedo;
+		rayDirection = normalize(hit.Normal + RandomUnitVector(rngState));
+		break;
+	}
+	}
 }
 
 [numthreads(1, 1, 1)]
@@ -117,7 +144,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	for (uint i = 0; i < SamplesPerPixel; ++i)
 	{
 		const float2 sampleOffset = float2(Random01(rngState) - 0.5f, Random01(rngState) - 0.5f);
-		const float3 viewportPixel = viewportTopLeft + pixelCenter + (viewportDeltaX * (x + sampleOffset.x) + viewportDeltaY * (y + sampleOffset.y));
+		const float3 viewportPixel = viewportTopLeft + pixelCenter + viewportDeltaX * (x + sampleOffset.x) + viewportDeltaY * (y + sampleOffset.y);
 
 		float3 rayOrigin = RootConstants.Position;
 		float3 rayDirection = normalize(viewportPixel - RootConstants.Position);
@@ -142,10 +169,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 
 			if (IsValidHit(hit))
 			{
-				const float3 material = color * 0.5f;
-				color = material;
-
-				rayDirection = normalize(hit.Normal + RandomUnitVector(rngState));
+				Scatter(rngState, rayDirection, color, hit);
 				rayOrigin = hit.Point;
 
 				++depth;
