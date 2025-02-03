@@ -99,6 +99,10 @@ void Scatter(inout uint rngState, inout float3 rayDirection, inout float3 attenu
 	{
 		attenuation *= hit.Material.Albedo;
 		rayDirection = normalize(hit.Normal + RandomUnitVector(rngState));
+		if (any(isnan(rayDirection)))
+		{
+			rayDirection = hit.Normal;
+		}
 		break;
 	}
 	}
