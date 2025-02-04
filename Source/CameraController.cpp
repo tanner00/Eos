@@ -7,11 +7,9 @@ static constexpr float RotationSpeedRadians = 8.0f * DegreesToRadians;
 
 static const Vector DefaultCameraDirection = { +0.0f, +0.0f, -1.0f };
 
-CameraController::CameraController(float fieldOfViewYRadians, float focalLength)
+CameraController::CameraController()
 	: Position(Vector::Zero)
 	, Orientation(Quaternion::Identity)
-	, FieldOfViewYRadians(fieldOfViewYRadians)
-	, FocalLength(focalLength)
 	, PitchRadians(0.0f)
 {
 }

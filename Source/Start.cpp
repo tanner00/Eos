@@ -19,9 +19,7 @@ void Start()
 
 	Raytracer raytracer(window);
 
-	static constexpr float fieldOfYRadians = Pi / 2.0f;
-	static constexpr float focalLength = 1.0f;
-	CameraController cameraController(fieldOfYRadians, focalLength);
+	CameraController cameraController;
 
 	double timeLast = 0.0;
 

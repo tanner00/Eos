@@ -48,11 +48,9 @@ void Raytracer::Update(const CameraController& cameraController)
 	const Vector position = cameraController.GetPosition();
 	const RootConstants rootConstants =
 	{
-		.OutputTextureIndex = Device.Get(OutputTexture),
-		.FieldOfViewYRadians = cameraController.GetFieldOfViewYRadians(),
-		.FocalLength = cameraController.GetFocalLength(),
 		.Orientation = cameraController.GetOrientation(),
 		.Position = Float3 { position.X, position.Y, position.Z },
+		.OutputTextureIndex = Device.Get(OutputTexture),
 	};
 	Graphics.SetRootConstants(&rootConstants);
 

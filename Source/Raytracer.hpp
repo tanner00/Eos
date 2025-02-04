@@ -10,17 +10,12 @@ class CameraController;
 
 struct RootConstants
 {
-	uint32 OutputTextureIndex;
-
-	float FieldOfViewYRadians;
-	float FocalLength;
-
-	PAD(4);
-
 	Matrix Orientation;
 	Float3 Position;
 
-	PAD(164);
+	uint32 OutputTextureIndex;
+
+	PAD(176);
 };
 
 class Raytracer : public NoCopy

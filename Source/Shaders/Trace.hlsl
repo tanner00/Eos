@@ -3,17 +3,17 @@
 static const uint SamplesPerPixel = 8;
 static const uint MaxDepth = 10;
 
+static const float FieldOfViewYRadians = Pi / 2.0f;
+static const float FocalLength = 1.0f;
+
 static const float3 BackgroundColor = float3(0.4f, 0.6f, 0.9f);
 
 struct RootConstants
 {
-	uint OutputTextureIndex;
-
-	float FieldOfViewYRadians;
-	float FocalLength;
-
 	matrix Orientation;
 	float3 Position;
+
+	uint OutputTextureIndex;
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
@@ -162,7 +162,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 
 	const float aspectRatio = (float)outputTextureWidth / outputTextureHeight;
 
-	const float viewportHeight = 2.0f * tan(RootConstants.FieldOfViewYRadians / 2.0f) * RootConstants.FocalLength;
+	const float viewportHeight = 2.0f * tan(FieldOfViewYRadians / 2.0f) * FocalLength;
 	const float viewportWidth = viewportHeight * aspectRatio;
 
 	const matrix view = transpose(RootConstants.Orientation);
@@ -177,7 +177,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const float3 viewportDeltaY = viewportY / outputTextureHeight;
 	const float3 pixelCenter = 0.5f * (viewportDeltaX + viewportDeltaY);
 
-	const float3 viewportTopLeft = RootConstants.Position - (RootConstants.FocalLength * cameraZ) - (viewportX / 2.0f) - (viewportY / 2.0f);
+	const float3 viewportTopLeft = RootConstants.Position - (FocalLength * cameraZ) - (viewportX / 2.0f) - (viewportY / 2.0f);
 
 	float3 samples = 0.0f;
 	for (uint i = 0; i < SamplesPerPixel; ++i)

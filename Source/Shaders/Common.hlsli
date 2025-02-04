@@ -1,5 +1,7 @@
 ﻿static const float Infinity = 1.#INF;
 
+static const float Pi = 3.14159265358979323846f;
+
 float3 LinearToSrgb(float3 x)
 {
 	return select(x < 0.0031308f, x * 12.92f, (pow(x, 1.0f / 2.4f) * 1.055f) - 0.055f);
