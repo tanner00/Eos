@@ -12,13 +12,31 @@ Raytracer::Raytracer(const Platform::Window* window)
 	CreatePipelines();
 
 	DrawText::Get().Init(&Device);
+
+	static constexpr Hlsl::Sphere spheres[] =
+	{
+		{ Float3 { 0.0f, -100.5f, -1.0f }, 100.0f, { Hlsl::MaterialType::Lambertian, Float3 { 0.8f, 0.8f, 0.0f }, 0.0f } },
+		{ Float3 { 0.0f, 0.0f, -1.2f }, 0.5f, { Hlsl::MaterialType::Lambertian, Float3 { 0.1f, 0.2f, 0.5f }, 0.0f } },
+		{ Float3 { -1.0f, 0.0f, -1.0f }, 0.5f, { Hlsl::MaterialType::Dielectric, Float3 { 0.8f, 0.8f, 0.8f }, 1.5f } },
+		{ Float3 { -1.0f, 0.0f, -1.0f }, 0.4f, { Hlsl::MaterialType::Dielectric, Float3 { 0.8f, 0.8f, 0.8f }, 1.0f / 1.5f } },
+		{ Float3 { 1.0f, 0.0f, -1.0f }, 0.5f, { Hlsl::MaterialType::Metallic, Float3 { 0.8f, 0.6f, 0.2f }, 0.0f } },
+	};
+	SpheresBuffer = Device.CreateBuffer("Spheres"_view, spheres,
+	{
+		.Type = BufferType::StructuredBuffer,
+		.Usage = BufferUsage::Static,
+		.Size = sizeof(spheres),
+		.Stride = sizeof(Hlsl::Sphere),
+	});
 }
 
 Raytracer::~Raytracer()
 {
-	DestroyPipelines();
+	Device.DestroyBuffer(&SpheresBuffer);
 
 	DrawText::Get().Shutdown();
+
+	DestroyPipelines();
 
 	DestroyScreenTextures();
 }
@@ -46,11 +64,13 @@ void Raytracer::Update(const CameraController& cameraController)
 	Graphics.SetPipeline(&TracePipeline);
 
 	const Vector position = cameraController.GetPosition();
-	const RootConstants rootConstants =
+	const Hlsl::TraceRootConstants rootConstants =
 	{
 		.Orientation = cameraController.GetOrientation(),
 		.Position = Float3 { position.X, position.Y, position.Z },
 		.OutputTextureIndex = Device.Get(OutputTexture),
+		.SpheresBufferIndex = Device.Get(SpheresBuffer),
+		.SpheresBufferCount = static_cast<uint32>(SpheresBuffer.GetCount()),
 	};
 	Graphics.SetRootConstants(&rootConstants);
 

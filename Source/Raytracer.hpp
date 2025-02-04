@@ -8,15 +8,46 @@
 
 class CameraController;
 
-struct RootConstants
+namespace Hlsl
+{
+
+enum class MaterialType : uint32
+{
+	Lambertian,
+	Metallic,
+	Dielectric,
+};
+
+struct Material
+{
+	MaterialType Type;
+
+	Float3 Albedo;
+
+	float RefractionIndex;
+};
+
+struct Sphere
+{
+	Float3 Position;
+	float Radius;
+	Material Material;
+};
+
+struct TraceRootConstants
 {
 	Matrix Orientation;
 	Float3 Position;
 
 	uint32 OutputTextureIndex;
 
+	uint32 SpheresBufferIndex;
+	uint32 SpheresBufferCount;
+
 	PAD(176);
 };
+
+}
 
 class Raytracer : public NoCopy
 {
@@ -42,6 +73,8 @@ private:
 
 	Texture SwapChainTextures[FramesInFlight];
 	Texture OutputTexture;
+
+	Buffer SpheresBuffer;
 
 	double AverageGpuTime;
 };

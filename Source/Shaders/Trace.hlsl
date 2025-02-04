@@ -14,6 +14,9 @@ struct RootConstants
 	float3 Position;
 
 	uint OutputTextureIndex;
+
+	uint SpheresBuffer;
+	uint SpheresBufferCount;
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
@@ -40,16 +43,6 @@ struct Sphere
 	float3 Position;
 	float Radius;
 	Material Material;
-};
-
-static const uint SpheresCount = 5;
-static const Sphere Spheres[SpheresCount] =
-{
-	{ float3(0.0f, -100.5f, -1.0f), 100.0f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.0f), 0.0f },
-	{ float3(0.0f, 0.0f, -1.2f), 0.5f, MaterialType::Lambertian, float3(0.1f, 0.2f, 0.5f), 0.0f },
-	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Dielectric, float3(0.8f, 0.8f, 0.8f), 1.5f },
-	{ float3(-1.0f, 0.0f, -1.0f), 0.4f, MaterialType::Dielectric, float3(0.8f, 0.8f, 0.8f), 1.0f / 1.5f },
-	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.6f, 0.2f), 0.0f },
 };
 
 struct Hit
@@ -151,6 +144,8 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 
 	const RWTexture2D<float3> outputTexture = ResourceDescriptorHeap[RootConstants.OutputTextureIndex];
 
+	const StructuredBuffer<Sphere> spheres = ResourceDescriptorHeap[RootConstants.SpheresBuffer];
+
 	uint outputTextureWidth;
 	uint outputTextureHeight;
 	outputTexture.GetDimensions(outputTextureWidth, outputTextureHeight);
@@ -194,9 +189,9 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 		{
 			Hit hit = (Hit)0;
 			hit.Time = -1.0f;
-			for (uint j = 0; j < SpheresCount; ++j)
+			for (uint j = 0; j < RootConstants.SpheresBufferCount; ++j)
 			{
-				const Sphere sphere = Spheres[j];
+				const Sphere sphere = spheres[j];
 
 				const Hit potentialHit = RaySphere(rayOrigin, rayDirection, 0.0001f, Infinity, sphere);
 				const bool closer = potentialHit.Time < hit.Time;
