@@ -21,12 +21,18 @@ enum class MaterialType
 {
 	Lambertian,
 	Metallic,
+	Dielectric,
 };
 
 struct Material
 {
 	MaterialType Type;
+
+	// Lambertian & Metallic
 	float3 Albedo;
+
+	// Dielectric
+	float RefractionIndex;
 };
 
 struct Sphere
@@ -36,13 +42,14 @@ struct Sphere
 	Material Material;
 };
 
-static const uint SpheresCount = 4;
+static const uint SpheresCount = 5;
 static const Sphere Spheres[SpheresCount] =
 {
-	{ float3(0.0f, -100.5f, -1.0f), 100.0f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.0f) },
-	{ float3(0.0f, 0.0f, -1.2f), 0.5f, MaterialType::Lambertian, float3(0.1f, 0.2f, 0.5f) },
-	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.8f, 0.8f) },
-	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.6f, 0.2f) },
+	{ float3(0.0f, -100.5f, -1.0f), 100.0f, MaterialType::Lambertian, float3(0.8f, 0.8f, 0.0f), 0.0f },
+	{ float3(0.0f, 0.0f, -1.2f), 0.5f, MaterialType::Lambertian, float3(0.1f, 0.2f, 0.5f), 0.0f },
+	{ float3(-1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Dielectric, float3(0.8f, 0.8f, 0.8f), 1.5f },
+	{ float3(-1.0f, 0.0f, -1.0f), 0.4f, MaterialType::Dielectric, float3(0.8f, 0.8f, 0.8f), 1.0f / 1.5f },
+	{ float3(1.0f, 0.0f, -1.0f), 0.5f, MaterialType::Metallic, float3(0.8f, 0.6f, 0.2f), 0.0f },
 };
 
 struct Hit
@@ -109,7 +116,28 @@ void Scatter(inout uint rngState, inout float3 rayDirection, inout float3 attenu
 	case MaterialType::Metallic:
 	{
 		attenuation *= hit.Material.Albedo;
-		rayDirection = reflect(rayDirection, hit.Normal);
+		rayDirection = Reflect(rayDirection, hit.Normal);
+		break;
+	}
+	case MaterialType::Dielectric:
+	{
+		const float index = hit.FrontFace ? (1.0f / hit.Material.RefractionIndex) : hit.Material.RefractionIndex;
+
+		const float cosTheta = min(dot(-rayDirection, hit.Normal), 1.0f);
+		const float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+		const float r0 = pow((1.0f - index) / (1.0f + index), 2.0f);
+		const float schlick = r0 + (1.0f - r0) * pow((1.0f - cosTheta), 5.0f);
+
+		const bool cannotRefract = index * sinTheta > 1.0f;
+		if (cannotRefract || schlick > Random01(rngState))
+		{
+			rayDirection = Reflect(rayDirection, hit.Normal);
+		}
+		else
+		{
+			rayDirection = Refract(rayDirection, hit.Normal, index);
+		}
 		break;
 	}
 	}

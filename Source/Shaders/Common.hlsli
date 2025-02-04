@@ -10,6 +10,19 @@ float3 SrgbToLinear(float3 x)
 	return select(x < 0.04045f, x / 12.92f, pow((x + 0.055f) / 1.055f, 2.4f));
 }
 
+float3 Reflect(float3 incoming, float3 normal)
+{
+	return incoming - 2.0f * dot(incoming, normal) * normal;
+}
+
+float3 Refract(float3 incoming, float3 normal, float refractionIndex)
+{
+	const float cosTheta = min(dot(-incoming, normal), 1.0f);
+	const float3 outPerpendicular = refractionIndex * (incoming + cosTheta * normal);
+	const float3 outParallel = -sqrt(abs(1.0f - dot(outPerpendicular, outPerpendicular))) * normal;
+	return outPerpendicular + outParallel;
+}
+
 uint PcgRandom(inout uint rngState)
 {
 	const uint state = rngState;
