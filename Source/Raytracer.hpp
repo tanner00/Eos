@@ -39,12 +39,14 @@ struct TraceRootConstants
 	Matrix Orientation;
 	Float3 Position;
 
+	uint32 FrameIndex;
+
 	uint32 OutputTextureIndex;
 
 	uint32 SpheresBufferIndex;
 	uint32 SpheresBufferCount;
 
-	PAD(176);
+	PAD(172);
 };
 
 }
@@ -75,6 +77,8 @@ private:
 	Texture OutputTexture;
 
 	Buffer SpheresBuffer;
+
+	uint32 FrameIndex;
 
 	double AverageGpuTime;
 };

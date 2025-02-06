@@ -11,15 +11,29 @@ CameraController::CameraController()
 	: Position(Vector::Zero)
 	, Orientation(Quaternion::Identity)
 	, PitchRadians(0.0f)
+	, LastMoved(0)
+	, LastMouseX(0)
+	, LastMouseY(0)
 {
 }
 
 void CameraController::Update(float timeDelta)
 {
+	bool mouseMoved = false;
 	if (Platform::GetInputMode() == InputMode::Captured)
 	{
-		const float yawDeltaRadians =   -static_cast<float>(GetMouseX()) * RotationSpeedRadians * timeDelta;
-		float pitchDeltaRadians =       -static_cast<float>(GetMouseY()) * RotationSpeedRadians * timeDelta;
+		const int32 mouseX = GetMouseX();
+		const int32 mouseY = GetMouseY();
+
+		if (LastMouseX != mouseX || LastMouseY != mouseY)
+		{
+			mouseMoved = true;
+		}
+		LastMouseX = mouseX;
+		LastMouseY = mouseY;
+
+		const float yawDeltaRadians =   -static_cast<float>(mouseX) * RotationSpeedRadians * timeDelta;
+		float pitchDeltaRadians =       -static_cast<float>(mouseY) * RotationSpeedRadians * timeDelta;
 
 		PitchRadians += pitchDeltaRadians;
 		if (PitchRadians > +Pi / 2.0f)
@@ -72,5 +86,14 @@ void CameraController::Update(float timeDelta)
 	{
 		const float movementSpeed = IsKeyPressed(Key::Shift) ? FastMovementSpeed : DefaultMovementSpeed;
 		Position = Position + movement.GetNormalized() * movementSpeed * timeDelta;
+	}
+
+	if (mouseMoved || moving)
+	{
+		LastMoved = 0;
+	}
+	else
+	{
+		++LastMoved;
 	}
 }

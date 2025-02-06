@@ -5,6 +5,7 @@
 Raytracer::Raytracer(const Platform::Window* window)
 	: Device(window)
 	, Graphics(Device.CreateGraphicsContext())
+	, FrameIndex(0)
 	, AverageGpuTime(0.0)
 {
 	CreateScreenTextures(window->DrawWidth, window->DrawHeight);
@@ -57,6 +58,15 @@ void Raytracer::Update(const CameraController& cameraController)
 		CreatePipelines();
 	}
 
+	if (cameraController.HasMoved())
+	{
+		FrameIndex = 0;
+	}
+	else
+	{
+		++FrameIndex;
+	}
+
 	Graphics.Begin();
 
 	const Texture& frameTexture = SwapChainTextures[Device.GetFrameIndex()];
@@ -68,6 +78,7 @@ void Raytracer::Update(const CameraController& cameraController)
 	{
 		.Orientation = cameraController.GetOrientation(),
 		.Position = Float3 { position.X, position.Y, position.Z },
+		.FrameIndex = FrameIndex,
 		.OutputTextureIndex = Device.Get(OutputTexture),
 		.SpheresBufferIndex = Device.Get(SpheresBuffer),
 		.SpheresBufferCount = static_cast<uint32>(SpheresBuffer.GetCount()),
@@ -138,6 +149,8 @@ void Raytracer::Resize(uint32 width, uint32 height)
 	CreateScreenTextures(width, height);
 
 	Device.WaitForIdle();
+
+	FrameIndex = 0;
 }
 
 void Raytracer::CreatePipelines()

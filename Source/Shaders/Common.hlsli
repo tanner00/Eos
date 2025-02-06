@@ -25,6 +25,17 @@ float3 Refract(float3 incoming, float3 normal, float refractionIndex)
 	return outPerpendicular + outParallel;
 }
 
+uint Hash(uint v)
+{
+	v ^= 2747636419;
+	v *= 2654435769;
+	v ^= v >> 16;
+	v *= 2654435769;
+	v ^= v >> 16;
+	v *= 2654435769;
+	return v;
+}
+
 uint PcgRandom(inout uint rngState)
 {
 	const uint state = rngState;

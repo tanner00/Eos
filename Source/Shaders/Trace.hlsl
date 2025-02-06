@@ -1,6 +1,6 @@
 #include "Common.hlsli"
 
-static const uint SamplesPerPixel = 8;
+static const uint SamplesPerPixel = 1;
 static const uint MaxDepth = 10;
 
 static const float FieldOfViewYRadians = Pi / 2.0f;
@@ -12,6 +12,8 @@ struct RootConstants
 {
 	matrix Orientation;
 	float3 Position;
+
+	uint FrameIndex;
 
 	uint OutputTextureIndex;
 
@@ -152,7 +154,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 
 	const uint dispatchThreadIndex = y * outputTextureWidth + x;
 
-	uint rngState = dispatchThreadIndex;
+	uint rngState = Hash(dispatchThreadIndex * RootConstants.FrameIndex);
 	PcgRandom(rngState);
 
 	const float aspectRatio = (float)outputTextureWidth / outputTextureHeight;
@@ -216,6 +218,9 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 		samples += color;
 	}
 
-	const float3 outputColor = LinearToSrgb(samples / SamplesPerPixel);
-	outputTexture[uint2(x, y)] = outputColor;
+	const float3 previousColor = SrgbToLinear(outputTexture[uint2(x, y)]);
+	const float3 newColor = samples / SamplesPerPixel;
+	const float3 accumulatedColor = lerp(previousColor, newColor, 1.0f / (1.0f + RootConstants.FrameIndex));
+
+	outputTexture[uint2(x, y)] = LinearToSrgb(accumulatedColor);
 }
