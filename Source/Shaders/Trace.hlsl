@@ -20,7 +20,7 @@ struct RootConstants
 };
 ConstantBuffer<RootConstants> RootConstants : register(b0);
 
-enum class MaterialType
+enum class MaterialType : uint
 {
 	Lambertian,
 	Metallic,
