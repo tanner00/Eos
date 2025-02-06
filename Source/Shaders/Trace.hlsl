@@ -155,7 +155,7 @@ void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 	const uint dispatchThreadIndex = y * outputTextureWidth + x;
 
 	uint rngState = Hash(dispatchThreadIndex * RootConstants.FrameIndex);
-	PcgRandom(rngState);
+	RandomPcg(rngState);
 
 	const float aspectRatio = (float)outputTextureWidth / outputTextureHeight;
 

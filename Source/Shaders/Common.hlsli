@@ -36,18 +36,17 @@ uint Hash(uint v)
 	return v;
 }
 
-uint PcgRandom(inout uint rngState)
+uint RandomPcg(inout uint rngState)
 {
 	const uint state = rngState;
-	rngState = rngState * 747796405u + 2891336453u;
-	const uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-	return (word >> 22u) ^ word;
+	rngState = rngState * 747796405U + 2891336453U;
+	const uint word = ((state >> ((state >> 28U) + 4U)) ^ state) * 277803737U;
+	return (word >> 22U) ^ word;
 }
 
 float Random01(inout uint rngState)
 {
-	static const float uintMax = 2 << 31;
-	return (float)PcgRandom(rngState) / (uintMax + 1.0f);
+	return (float)RandomPcg(rngState) / (float)0xFFFFFFFF;
 }
 
 float Random(inout uint rngState, float min, float max)
