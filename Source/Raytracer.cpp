@@ -2,32 +2,77 @@
 #include "CameraController.hpp"
 #include "DrawText.hpp"
 
+#include "Luft/Random.hpp"
+
 Raytracer::Raytracer(const Platform::Window* window)
 	: Device(window)
 	, Graphics(Device.CreateGraphicsContext())
 	, FrameIndex(0)
 	, AverageGpuTime(0.0)
 {
+	const auto lerp = [](float a, float b, float t)
+	{
+		return a + (b - a) * t;
+	};
+
 	CreateScreenTextures(window->DrawWidth, window->DrawHeight);
 
 	CreatePipelines();
 
 	DrawText::Get().Init(&Device);
 
-	static constexpr Hlsl::Sphere spheres[] =
+	RandomContext random(0);
+
+	Array<Hlsl::Sphere> spheres(&GlobalAllocator::Get());
+
+	for (int32 a = -10; a < 10; ++a)
 	{
-		{ Float3 { 0.0f, -100.5f, -1.0f }, 100.0f, { Hlsl::MaterialType::Lambertian, Float3 { 0.8f, 0.8f, 0.0f }, 0.0f } },
-		{ Float3 { 0.0f, 0.0f, -1.2f }, 0.5f, { Hlsl::MaterialType::Lambertian, Float3 { 0.1f, 0.2f, 0.5f }, 0.0f } },
-		{ Float3 { -1.0f, 0.0f, -1.0f }, 0.5f, { Hlsl::MaterialType::Dielectric, Float3 { 0.8f, 0.8f, 0.8f }, 1.5f } },
-		{ Float3 { -1.0f, 0.0f, -1.0f }, 0.4f, { Hlsl::MaterialType::Dielectric, Float3 { 0.8f, 0.8f, 0.8f }, 1.0f / 1.5f } },
-		{ Float3 { 1.0f, 0.0f, -1.0f }, 0.5f, { Hlsl::MaterialType::Metallic, Float3 { 0.8f, 0.6f, 0.2f }, 0.0f } },
-	};
-	SpheresBuffer = Device.CreateBuffer("Spheres"_view, spheres,
+		for (int32 b = -10; b < 10; ++b)
+		{
+			const float materialChoice = random.Float01();
+			const Vector position = Vector { static_cast<float>(a) + 0.9f * random.Float01(), 0.2f, static_cast<float>(b) + 0.9f * random.Float01() };
+
+			Hlsl::MaterialType type;
+			Float3 albedo = Float3 { 0.0f, 0.0f, 0.0f };
+			float refractionIndex = 0.0f;
+
+			if ((position - Vector { +4.0f, +0.2f, +0.0f }).GetMagnitude() > 0.9f)
+			{
+				if (materialChoice < 0.8f)
+				{
+					type = Hlsl::MaterialType::Lambertian;
+					albedo = { random.Float01(), random.Float01(), random.Float01() };
+				}
+				else if (materialChoice < 0.95f)
+				{
+					type = Hlsl::MaterialType::Metallic;
+					albedo = { lerp(0.5f, 1.0f, random.Float01()), lerp(0.5f, 1.0f, random.Float01()), lerp(0.5f, 1.0f, random.Float01()) };
+				}
+				else
+				{
+					type = Hlsl::MaterialType::Dielectric;
+					refractionIndex = 1.5f;
+				}
+
+				spheres.Emplace(Float3 { position.X, position.Y, position.Z }, 0.2f, Hlsl::Material { type, albedo, refractionIndex });
+			}
+		}
+	}
+
+	spheres.Emplace(Float3 { 0.0f, -1000.0f, 0.0f }, 1000.0f, Hlsl::Material { Hlsl::MaterialType::Lambertian, Float3 { 0.5f, 0.5f, 0.5f }, 0.0f });
+
+	spheres.Emplace(Float3 { 0.0f, 1.0f, 0.0f }, 1.0f, Hlsl::Material { Hlsl::MaterialType::Dielectric, Float3 { 0.0f, 0.0f, 0.0f }, 1.5f });
+
+	spheres.Emplace(Float3 { -4.0f, 1.0f, 0.0f }, 1.0f, Hlsl::Material { Hlsl::MaterialType::Lambertian, Float3 { 0.4f, 0.2f, 0.1f }, 0.0f });
+
+	spheres.Emplace(Float3 { 4.0f, 1.0f, 0.0f }, 1.0f, Hlsl::Material { Hlsl::MaterialType::Metallic, Float3 { 0.7f, 0.6f, 0.5f }, 0.0f });
+
+	SpheresBuffer = Device.CreateBuffer("Spheres Buffer"_view, spheres.GetData(),
 	{
 		.Type = BufferType::StructuredBuffer,
 		.Usage = BufferUsage::Static,
-		.Size = sizeof(spheres),
-		.Stride = sizeof(Hlsl::Sphere),
+		.Size = spheres.GetDataSize(),
+		.Stride = spheres.GetElementSize(),
 	});
 }
 

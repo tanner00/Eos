@@ -7,8 +7,10 @@ static constexpr float RotationSpeedRadians = 8.0f * DegreesToRadians;
 
 static const Vector DefaultCameraDirection = { +0.0f, +0.0f, -1.0f };
 
+static const Vector InitialCameraPosition = { +13.0f, +2.0f, +3.0f };
+
 CameraController::CameraController()
-	: Position(Vector::Zero)
+	: Position(InitialCameraPosition)
 	, Orientation(Quaternion::Identity)
 	, PitchRadians(0.0f)
 	, LastMoved(0)

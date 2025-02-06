@@ -3,7 +3,7 @@
 static const uint SamplesPerPixel = 1;
 static const uint MaxDepth = 10;
 
-static const float FieldOfViewYRadians = Pi / 2.0f;
+static const float FieldOfViewYRadians = Pi / 9.0f;
 static const float FocalLength = 1.0f;
 
 static const float3 BackgroundColor = float3(0.4f, 0.6f, 0.9f);
