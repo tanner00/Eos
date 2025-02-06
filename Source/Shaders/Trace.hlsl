@@ -138,7 +138,7 @@ void Scatter(inout uint rngState, inout float3 rayDirection, inout float3 attenu
 	}
 }
 
-[numthreads(1, 1, 1)]
+[numthreads(8, 8, 1)]
 void ComputeStart(uint3 dispatchThreadID : SV_DispatchThreadID)
 {
 	const uint x = dispatchThreadID.x;

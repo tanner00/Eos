@@ -130,7 +130,7 @@ void Raytracer::Update(const CameraController& cameraController)
 	};
 	Graphics.SetRootConstants(&rootConstants);
 
-	Graphics.Dispatch(frameTexture.GetWidth(), frameTexture.GetHeight(), 1);
+	Graphics.Dispatch((frameTexture.GetWidth() + 7) / 8, (frameTexture.GetHeight() + 7) / 8, 1);
 
 	Graphics.TextureBarrier
 	(
